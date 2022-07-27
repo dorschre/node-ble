@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const BusHelper = require('./BusHelper')
 const buildTypedValue = require('./buildTypedValue')
-
+const Descriptor = require('./Descriptor')
 /**
  * @classdesc GattCharacteristic class interacts with a GATT characteristic.
  * @class GattCharacteristic
@@ -9,7 +9,7 @@ const buildTypedValue = require('./buildTypedValue')
  * @see You can construct a GattCharacteristic object via {@link GattService#getCharacteristic} method.
  */
 class GattCharacteristic extends EventEmitter {
-  constructor (dbus, adapter, device, service, characteristic) {
+  constructor(dbus, adapter, device, service, characteristic) {
     super()
     this.dbus = dbus
     this.adapter = adapter
@@ -17,13 +17,48 @@ class GattCharacteristic extends EventEmitter {
     this.service = service
     this.characteristic = characteristic
     this.helper = new BusHelper(dbus, 'org.bluez', `/org/bluez/${adapter}/${device}/${service}/${characteristic}`, 'org.bluez.GattCharacteristic1', { usePropsEvents: true })
+    this._descriptor = {}
+  }
+
+  async init() {
+    this._descriptor = {}
+    /*
+    
+    */
+
+    const children = await this.helper.children()
+    for (const c of children) {
+      const descriptor = new Descriptor(this.dbus, this.adapter, this.device, this.service, this.characteristic, c)
+      const uuid = await descriptor.getUUID()
+      this._descriptor[uuid] = descriptor
+    }
+  }
+
+  /**
+ * List of available characteristic names.
+ * @returns {string[]}
+ */
+  async descriptors() {
+    return Object.keys(this._descriptor)
+  }
+
+  /**
+   * 
+   * Returns the Descriptor.
+  */
+  async getDescriptor (uuid) {
+    if (uuid in this._descriptor) {
+      return this._descriptor[uuid]
+    }
+
+    throw new Error('Descriptor not available')
   }
 
   /**
    * 128-bit characteristic UUID.
    * @returns {string}
    */
-  async getUUID () {
+  async getUUID() {
     return this.helper.prop('UUID')
   }
 
@@ -31,7 +66,7 @@ class GattCharacteristic extends EventEmitter {
    * Defines how the characteristic value can be used.
    * @returns {string[]}
    */
-  async getFlags () {
+  async getFlags() {
     return this.helper.prop('Flags')
   }
 
@@ -39,7 +74,7 @@ class GattCharacteristic extends EventEmitter {
    * True, if notifications or indications on this characteristic are currently enabled.
    * @returns {boolean}
    */
-  async isNotifying () {
+  async isNotifying() {
     return this.helper.prop('Notifying')
   }
 
@@ -48,7 +83,7 @@ class GattCharacteristic extends EventEmitter {
    * @param {number} [offset = 0]
    * @returns {Buffer}
    */
-  async readValue (offset = 0) {
+  async readValue(offset = 0) {
     const options = {
       offset: buildTypedValue('uint16', offset)
     }
@@ -63,7 +98,7 @@ class GattCharacteristic extends EventEmitter {
    * @param {number} [optionsOrOffset.offset = 0] - Starting offset.
    * @param {WritingMode} [optionsOrOffset.type = reliable] - Writing mode
    */
-  async writeValue (value, optionsOrOffset = {}) {
+  async writeValue(value, optionsOrOffset = {}) {
     if (!Buffer.isBuffer(value)) {
       throw new Error('Only buffers can be wrote')
     }
@@ -84,7 +119,7 @@ class GattCharacteristic extends EventEmitter {
    * Starts a notification session from this characteristic.
    * It emits valuechanged event when receives a notification.
    */
-  async startNotifications () {
+  async startNotifications() {
     await this.helper.callMethod('StartNotify')
 
     const cb = (propertiesChanged) => {
@@ -97,12 +132,12 @@ class GattCharacteristic extends EventEmitter {
     this.helper.on('PropertiesChanged', cb)
   }
 
-  async stopNotifications () {
+  async stopNotifications() {
     await this.helper.callMethod('StopNotify')
     this.helper.removeAllListeners('PropertiesChanged') // might be improved
   }
 
-  async toString () {
+  async toString() {
     return this.getUUID()
   }
 }

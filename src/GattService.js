@@ -20,10 +20,18 @@ class GattService {
   async init () {
     this._characteristics = {}
 
+    /*
+    const servicesResolved = await this.helper.prop('ServicesResolved')
+    if (!servicesResolved) {
+      await this.helper.waitPropChange('ServicesResolved')
+    }
+
+    */
     const children = await this.helper.children()
     for (const c of children) {
       const characteristic = new GattCharacteristic(this.dbus, this.adapter, this.device, this.service, c)
       const uuid = await characteristic.getUUID()
+      await characteristic.init()
       this._characteristics[uuid] = characteristic
     }
   }
