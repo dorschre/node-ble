@@ -9,7 +9,7 @@ const GattServer = require('./GattServer')
  * @see You can construct a Device object via {@link Adapter#getDevice} method
  */
 class Device extends EventEmitter {
-  constructor (dbus, adapter, device) {
+  constructor(dbus, adapter, device) {
     super()
     this.dbus = dbus
     this.adapter = adapter
@@ -21,7 +21,7 @@ class Device extends EventEmitter {
    * The Bluetooth remote name.
    * @returns {string}
    */
-  async getName () {
+  async getName() {
     return this.helper.prop('Name')
   }
 
@@ -29,7 +29,7 @@ class Device extends EventEmitter {
    * The Bluetooth device address of the remote device.
    * @returns {string}
    */
-  async getAddress () {
+  async getAddress() {
     return this.helper.prop('Address')
   }
 
@@ -37,7 +37,7 @@ class Device extends EventEmitter {
    * The Bluetooth device Address Type (public, random).
    * @returns {string}
    */
-  async getAddressType () {
+  async getAddressType() {
     return this.helper.prop('AddressType')
   }
 
@@ -45,7 +45,7 @@ class Device extends EventEmitter {
    * The name alias for the remote device.
    * @returns {string}
    */
-  async getAlias () {
+  async getAlias() {
     return this.helper.prop('Alias')
   }
 
@@ -53,7 +53,7 @@ class Device extends EventEmitter {
    * Received Signal Strength Indicator of the remote device
    * @returns {number}
    */
-  async getRSSI () {
+  async getRSSI() {
     return this.helper.prop('RSSI')
   }
 
@@ -61,7 +61,7 @@ class Device extends EventEmitter {
    * Advertised transmitted power level.
    * @returns {number}
    */
-  async getTXPower () {
+  async getTXPower() {
     return this.helper.prop('TxPower')
   }
 
@@ -69,7 +69,7 @@ class Device extends EventEmitter {
    * Indicates if the remote device is paired.
    * @returns {boolean}
    */
-  async isPaired () {
+  async isPaired() {
     return this.helper.prop('Paired')
   }
 
@@ -77,28 +77,37 @@ class Device extends EventEmitter {
    * Indicates if the remote device is currently connected.
    * @returns {boolean}
    */
-  async isConnected () {
+  async isConnected() {
     return this.helper.prop('Connected')
   }
 
   /**
    * This method will connect to the remote device
    */
-  async pair () {
+  async pair() {
     return this.helper.callMethod('Pair')
   }
 
   /**
    * This method can be used to cancel a pairing operation initiated by the Pair method.
    */
-  async cancelPair () {
+  async cancelPair() {
     return this.helper.callMethod('CancelPair')
   }
 
   /**
+   * 
+   * @returns This method can be used to get the Manufacturing Data or Data from a beacon.
+   */
+  async getManufacturingData() {
+    return this.helper.prop('ManufacturerData')
+  }
+
+
+  /**
    * Connect to remote device
    */
-  async connect () {
+  async connect() {
     const cb = (propertiesChanged) => {
       if ('Connected' in propertiesChanged) {
         const { value } = propertiesChanged.Connected
@@ -117,7 +126,7 @@ class Device extends EventEmitter {
   /**
    * Disconnect remote device
    */
-  async disconnect () {
+  async disconnect() {
     await this.helper.callMethod('Disconnect')
     this.helper.removeAllListeners('PropertiesChanged') // might be improved
   }
@@ -126,7 +135,7 @@ class Device extends EventEmitter {
    * Init a GattServer instance and return it
    * @returns {GattServer}
    */
-  async gatt () {
+  async gatt() {
     const gattServer = new GattServer(this.dbus, this.adapter, this.device)
     await gattServer.init()
     return gattServer
@@ -136,7 +145,7 @@ class Device extends EventEmitter {
    * Human readable class identifier.
    * @returns {string}
    */
-  async toString () {
+  async toString() {
     const name = await this.getName()
     const address = await this.getAddress()
 
