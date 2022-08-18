@@ -18,6 +18,7 @@ class GattCharacteristic extends EventEmitter {
     this.characteristic = characteristic
     this.helper = new BusHelper(dbus, 'org.bluez', `/org/bluez/${adapter}/${device}/${service}/${characteristic}`, 'org.bluez.GattCharacteristic1', { usePropsEvents: true })
     this._descriptor = {}
+    this._last_subscribed_value = undefined
   }
 
   async init() {
@@ -125,7 +126,12 @@ class GattCharacteristic extends EventEmitter {
     const cb = (propertiesChanged) => {
       if ('Value' in propertiesChanged) {
         const { value } = propertiesChanged.Value
-        this.emit('valuechanged', Buffer.from(value))
+        
+        if (this._last_subscribed_value != value.toString()){
+          this.emit('valuechanged', Buffer.from(value))
+          this._last_subscribed_value = value.toString();
+        }
+
       }
     }
 
