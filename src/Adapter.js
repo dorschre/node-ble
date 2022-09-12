@@ -3,7 +3,7 @@ const BusHelper = require('./BusHelper')
 const buildTypedValue = require('./buildTypedValue')
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000
-const DEFAULT_DISCOVERY_INTERVAL = 1000
+const DEFAULT_DISCOVERY_INTERVAL = 100
 
 /**
  * @classdesc Adapter class interacts with the local bluetooth adapter
